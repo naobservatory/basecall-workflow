@@ -45,8 +45,6 @@ workflow BASECALL {
         // Convert to FASTQ
         fastq_ch = BAM_TO_FASTQ(final_bam_ch, params.nanopore_run)
 
-
-
     publish:
         fastq_ch >> "raw"
         bam_ch.summary >> "summary"
