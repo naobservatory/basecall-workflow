@@ -11,7 +11,7 @@ process BASECALL_POD_5_SIMPLEX {
         val nanopore_run
 
     output:
-        path("calls_*.bam"), emit: bam
+        path("*.bam"), emit: bam
         path("sequencing_summary_*.txt"), emit: summary
 
     shell:
@@ -21,9 +21,9 @@ process BASECALL_POD_5_SIMPLEX {
         batch_num=$(basename !{pod_5_dir} | grep -o '[0-9]\\+')
 
         # Dorado basecalling
-        dorado basecaller sup !{pod_5_dir} --kit-name !{kit} > calls_${nanopore_run}-${batch_num}.bam
+        dorado basecaller sup !{pod_5_dir} --kit-name !{kit} > ${nanopore_run}-${batch_num}.bam
 
-        dorado summary calls_${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
+        dorado summary ${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
         '''
 }
 
@@ -39,7 +39,7 @@ process BASECALL_POD_5_DUPLEX {
         val nanopore_run
 
     output:
-        path("calls_*.bam"), emit: bam
+        path("*.bam"), emit: bam
         path("sequencing_summary_*.txt"), emit: summary
 
     shell:
@@ -49,9 +49,9 @@ process BASECALL_POD_5_DUPLEX {
         batch_num=$(basename !{pod_5_dir} | grep -o '[0-9]\\+')
 
         # Dorado basecalling
-        dorado duplex sup !{pod_5_dir} > calls_${nanopore_run}-${batch_num}.bam
+        dorado duplex sup !{pod_5_dir} > ${nanopore_run}-${batch_num}.bam
 
-        dorado summary calls_${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
+        dorado summary ${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
         '''
 }
 
@@ -63,7 +63,7 @@ process DEMUX_POD_5 {
     memory '8 GB'
 
     input:
-        path calls_bam
+        path bam
         val kit
         val nanopore_run
     output:
@@ -73,10 +73,13 @@ process DEMUX_POD_5 {
         """
         nanopore_run=${nanopore_run}
         # Extract batch number
-        batch_num=\$(basename ${calls_bam} | grep -o '[0-9]\\+' | tail -n1)
+        batch_num=\$(basename ${bam} | grep -o '[0-9]\\+' | tail -n1)
 
         # Demultiplex
-        dorado demux --no-classify --output-dir demultiplexed/ ${calls_bam}
+        dorado demux --no-classify --output-dir demultiplexed/ ${bam}
+
+        # Print contents of demultiplexed directory
+        ls -la demultiplexed/*
 
         # Rename output files
         for f in demultiplexed/*; do

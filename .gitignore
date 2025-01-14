@@ -1,0 +1,43 @@
+# Nextflow specific
+.nextflow/
+.nextflow.log*
+work/
+.DS_Store
+*.pyc
+__pycache__/
+.pytest_cache/
+*.pyo
+*.pyd
+
+# Workflow specific
+results/
+raw/
+logging/
+sequencing_summary*
+
+# Python virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System specific
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.*.swp
+*~
+
+# Log files
+*.log
+logs/
+

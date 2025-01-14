@@ -19,6 +19,14 @@ for fname in os.listdir(args.pod5_dir):
     path = os.path.join(args.pod5_dir, fname)
     size = os.path.getsize(path)
 
+    # If a file is larger than the batch size, create a new batch with only that file
+    if size > args.batch_size:
+        batch_num += 1
+        batch_dir = os.path.join(args.output_dir, f"batch_{batch_num:04d}")
+        os.makedirs(batch_dir, exist_ok=True)
+        shutil.copy(path, batch_dir)
+        continue
+
     if current_batch_size + size > args.batch_size:
         batch_num += 1
         batch_dir = os.path.join(args.output_dir, f"batch_{batch_num:04d}")

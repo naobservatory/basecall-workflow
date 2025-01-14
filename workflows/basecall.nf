@@ -23,31 +23,28 @@ nextflow.preview.output = true
 // Complete primary workflow
 workflow BASECALL {
     main:
-        // Start time
-        start_time = new Date()
-        start_time_str = start_time.format("YYYY-MM-dd HH:mm:ss z (Z)")
-        // Batching
-        batch_pod5_ch = BATCH_POD_5(params.pod_5_dir, params.batch_size)
+    // Start time
+    start_time = new Date()
+    start_time_str = start_time.format("YYYY-MM-dd HH:mm:ss z (Z)")
+    // Batching
+    batch_pod5_ch = BATCH_POD_5(params.pod_5_dir, params.batch_size).flatten()
 
-        // Basecalling
-        if (params.duplex) {
-            bam_ch = BASECALL_POD_5_DUPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
-            final_bam_ch = bam_ch.bam.flatten()
-        } else {
-            bam_ch = BASECALL_POD_5_SIMPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
-            if (params.demux) {
-                demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run)
-                final_bam_ch = demux_ch.demux_bam.flatten()
-            }
+    // Basecalling
+    if (params.duplex) {
+        bam_ch = BASECALL_POD_5_DUPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
+        final_bam_ch = bam_ch.bam.flatten()
+    } else {
+        bam_ch = BASECALL_POD_5_SIMPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
+        if (params.demux) {
+            demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run)
+            final_bam_ch = demux_ch.demux_bam.flatten()
         }
+    }
 
-
-        // Convert to FASTQ
-        fastq_ch = BAM_TO_FASTQ(final_bam_ch, params.nanopore_run)
-
-
+    // Convert to FASTQ
+    fastq_ch = BAM_TO_FASTQ(final_bam_ch, params.nanopore_run)
 
     publish:
-        fastq_ch >> "raw"
-        bam_ch.summary >> "summary"
+    fastq_ch >> "raw"
+    bam_ch.summary >> "logging"
 }
