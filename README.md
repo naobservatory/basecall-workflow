@@ -8,17 +8,10 @@ This Nextflow pipeline is designed to process Oxford Nanopore raw signal data (P
 
 The pipeline consists of a single workflow that processes Nanopore POD5 files through several phases:
 
-1. A **batching phase** where POD5 files are grouped into manageable batches
+1. A **batching phase** where POD5 files are grouped into batches to allow parallelized basecalling
 2. A **basecalling phase** using Dorado in either simplex or duplex mode
 3. An optional **demultiplexing phase** for barcoded samples
 4. A final **conversion phase** to generate FASTQ files from BAM output
-
-### Workflow Steps
-
-1. **Batching**: The `BATCH_POD_5` module processes the input POD5 directory and creates batches of a specified size
-2. **Basecalling**: Either `BASECALL_POD_5_SIMPLEX` or `BASECALL_POD_5_DUPLEX` is used depending on configuration
-3. **Demultiplexing**: If enabled, `DEMUX_POD_5` separates reads by barcode
-4. **Conversion**: `BAM_TO_FASTQ` converts the final BAM files to FASTQ format
 
 ### Pipeline Outputs
 
@@ -33,8 +26,8 @@ The workflow produces the following key outputs:
 
 1. Install Nextflow (23.04.0+)
 2. Install Docker
-3. Clone this repository
-4. Configure your compute environment (local or cloud)
+3. Set up [AWS BATCH](https://github.com/naobservatory/mgs-workflow/tree/master#:~:text=The%20batch%20profile%20is,your%20Batch%20job%20queue.)
+4. Clone this repository
 
 ### Running the Pipeline
 
@@ -48,28 +41,14 @@ Key Parameters:
 - `--pod_5_dir`: Directory containing POD5 files
 - `--kit`: Sequencing kit used (e.g., "dna_r10.4.1_e8.2_400bps_sup")
 - `--batch_size`: Number of POD5 files per batch (default: 10)
-- `--duplex`: Enable duplex basecalling (default: false)
-- `--demux`: Enable demultiplexing (default: false)
+- `--duplex`: Enable duplex basecalling (default: false). Change parameter in config file.
+- `--demux`: Enable demultiplexing (default: false). Change parameter in config file.
 
-### Profiles
-
-The pipeline comes with several built-in configuration profiles:
-- `standard`: For local execution
-- `docker`: For running with Docker containers
-- `aws`: For running on AWS infrastructure
 
 ## Troubleshooting
 
 Common issues and their solutions:
 
 1. **Insufficient Memory**: Increase available memory or reduce batch size
-2. **Missing POD5 Files**: Verify input directory path and file permissions
+2. **Missing POD5 Files**: Verify input directory path and check if your AWS credentials are set up properly
 3. **Docker Issues**: Ensure Docker is running and has sufficient resources
-
-## Contributing
-
-Please submit issues and pull requests through GitHub.
-
-## License
-
-This project is licensed under [insert license].
