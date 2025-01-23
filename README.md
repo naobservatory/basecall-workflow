@@ -33,22 +33,18 @@ The workflow produces the following key outputs:
 
 Basic usage:
 
+Create a new directory, name it after the delivery, copy in basecall.config as nextflow.config, and set the parameters. Params:
+
+- duplex
+- demux
+- batch_size (sizing for batching pod5 files for parallelized base-calling)
+- nanopore_run (name of run/delivery)
+- kit (name of ONT kit, needed for demux'ing)
+- pod_5_dir (path to dir containing pod5 files)
+- base_dir (path to where output will be saved to)
+
+Once that is done, you can switch into the directory and run
+
 ```bash
-nextflow run main.nf -profile <profile_name> --pod_5_dir <path_to_pod5_files> --kit <kit_name>
+nextflow run .. -resume
 ```
-
-Key Parameters:
-- `--pod_5_dir`: Directory containing POD5 files
-- `--kit`: Sequencing kit used (e.g., "dna_r10.4.1_e8.2_400bps_sup")
-- `--batch_size`: Number of POD5 files per batch (default: 10)
-- `--duplex`: Enable duplex basecalling (default: false). Change parameter in config file.
-- `--demux`: Enable demultiplexing (default: false). Change parameter in config file.
-
-
-## Troubleshooting
-
-Common issues and their solutions:
-
-1. **Insufficient Memory**: Increase available memory or reduce batch size
-2. **Missing POD5 Files**: Verify input directory path and check if your AWS credentials are set up properly
-3. **Docker Issues**: Ensure Docker is running and has sufficient resources
