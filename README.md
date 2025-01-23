@@ -36,12 +36,19 @@ Basic usage:
 Create a new directory, name it after the delivery, copy in basecall.config as nextflow.config, and set the parameters. Params:
 
 - duplex
+  - Duplex basecalling or no? You can't combine duplex and demux
 - demux
-- batch_size (sizing for batching pod5 files for parallelized base-calling)
-- nanopore_run (name of run/delivery)
-- kit (name of ONT kit, needed for demux'ing)
-- pod_5_dir (path to dir containing pod5 files)
-- base_dir (path to where output will be saved to)
+  - Demultiplex basecalling output?
+- batch_size
+  - Sizing for batching pod5 files for parallelized base-calling
+- nanopore_run N
+  - Name of run/delivery
+- kit 
+  - Name of ONT kit, needed for demux'ing
+- pod_5_dir
+  - path to dir containing pod5 files
+- base_dir
+  - path to where output will be saved to
 
 Once that is done, you can switch into the directory and run
 
