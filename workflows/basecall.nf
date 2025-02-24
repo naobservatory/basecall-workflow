@@ -35,22 +35,22 @@ workflow BASECALL {
 
         batch_ch.view()
 
-        // // Basecalling
-        // if (params.duplex) {
-        //     bam_ch = BASECALL_POD_5_DUPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
-        //     final_bam_ch = bam_ch.bam.flatten()
-        // } else {
-        //     bam_ch = BASECALL_POD_5_SIMPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
-        //     if (params.demux) {
-        //         demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run)
-        //         final_bam_ch = demux_ch.demux_bam.flatten()
-        //     }
-        // }
+        // Basecalling
+        if (params.duplex) {
+            bam_ch = BASECALL_POD_5_DUPLEX(batch_pod5_ch, params.kit, params.delivery)
+            bam_flat_ch = bam_ch.bam.flatten()
+        } else {
+            bam_ch = BASECALL_POD_5_SIMPLEX(batch_pod5_ch, params.kit, params.delivery)
+            if (params.demux) {
+                demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.delivery)
+                bam_flat_ch = demux_ch.demux_bam.flatten()
+            }
 
-        // // Convert to FASTQ
-        // fastq_ch = BAM_TO_FASTQ(final_bam_ch, params.nanopore_run)
+
+        // Convert to FASTQ
+        fastq_ch = BAM_TO_FASTQ(bam_flat_ch, params.delivery)
 
         // publish:
-        // fastq_ch >> "raw"
-        // bam_ch.summary >> "logging"
+        fastq_ch >> "raw"
+
 }
