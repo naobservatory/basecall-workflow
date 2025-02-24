@@ -6,24 +6,22 @@ process BASECALL_POD_5_SIMPLEX {
     memory '8 GB'
 
     input:
-        path(pod_5_dir)
+        tuple val(batch_id), path(batch_dir)
         val kit
         val nanopore_run
 
     output:
-        path("*.bam"), emit: bam
-        path("sequencing_summary_*.txt"), emit: summary
+        tuple val(batch_id), path("*.bam"), emit: bam
 
     shell:
         '''
         nanopore_run=!{nanopore_run}
-        # Extract batch number
-        batch_num=$(basename !{pod_5_dir} | grep -o '[0-9]\\+')
+        batch_id=!{batch_id}
+        batch_dir=!{batch_dir}
 
         # Dorado basecalling
-        dorado basecaller sup !{pod_5_dir} --kit-name !{kit} > ${nanopore_run}-${batch_num}.bam
+        dorado basecaller --estimate-poly-a sup !{batch_dir} --kit-name !{kit} > ${nanopore_run}-${batch_id}.bam
 
-        dorado summary ${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
         '''
 }
 
@@ -34,24 +32,21 @@ process BASECALL_POD_5_DUPLEX {
     memory '8 GB'
 
     input:
-        path(pod_5_dir)
+        tuple val(batch_id), path(batch_dir)
         val kit
         val nanopore_run
 
     output:
-        path("*.bam"), emit: bam
-        path("sequencing_summary_*.txt"), emit: summary
+        tuple val(batch_id), path("*.bam"), emit: bam
 
     shell:
         '''
         nanopore_run=!{nanopore_run}
-        # Extract batch number
-        batch_num=$(basename !{pod_5_dir} | grep -o '[0-9]\\+')
+        batch_id=!{batch_id}
+        batch_dir=!{batch_dir}
 
         # Dorado basecalling
-        dorado duplex sup !{pod_5_dir} > ${nanopore_run}-${batch_num}.bam
-
-        dorado summary ${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
+        dorado duplex sup !{batch_dir} > ${nanopore_run}-${batch_id}.bam
         '''
 }
 
@@ -63,7 +58,7 @@ process DEMUX_POD_5 {
     memory '8 GB'
 
     input:
-        path bam
+        tuple val(batch_id), path(bam)
         val kit
         val nanopore_run
     output:
@@ -72,21 +67,17 @@ process DEMUX_POD_5 {
     script:
         """
         nanopore_run=${nanopore_run}
-        # Extract batch number
-        batch_num=\$(basename ${bam} | grep -o '[0-9]\\+' | tail -n1)
+        batch_id=${batch_id}
 
         # Demultiplex
         dorado demux --no-classify --output-dir demultiplexed/ ${bam}
-
-        # Print contents of demultiplexed directory
-        ls -la demultiplexed/*
 
         # Rename output files
         for f in demultiplexed/*; do
             [[ "\$f" == *.bam ]] || { echo "Error: File \$f is not a BAM file"; exit 1; }
             barcode=\$(basename "\$f" | sed -E 's/.*_(.+)\\.bam\$/\\1/')
             barcode=\$(echo "\$barcode" | sed -E 's/barcode//')
-            mv "\$f" "demultiplexed/\${nanopore_run}-\${barcode}-div\${batch_num}.bam"
+            mv "\$f" "demultiplexed/\${nanopore_run}-\${batch_id}-\${barcode}-div.bam"
         done
         """
 }

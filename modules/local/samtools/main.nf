@@ -3,7 +3,7 @@ process BAM_TO_FASTQ {
 
     input:
         path(bam)
-        val nanopore_run
+        val delivery
     output:
         path '*.fastq.gz'
 
