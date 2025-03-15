@@ -3,7 +3,7 @@ process BASECALL_POD_5_SIMPLEX {
     label "dorado"
     label "basecall"
     accelerator 1
-    memory '8 GB'
+    memory '16 GB'
 
     input:
         tuple val(batch_id), path(batch_dir)
@@ -29,7 +29,7 @@ process BASECALL_POD_5_DUPLEX {
     label "dorado"
     label "basecall"
     accelerator 1
-    memory '8 GB'
+    memory '16 GB'
 
     input:
         tuple val(batch_id), path(batch_dir)
@@ -55,7 +55,7 @@ process DEMUX_POD_5 {
     label "dorado"
     label "demux"
     accelerator 1
-    memory '8 GB'
+    memory '16 GB'
 
     input:
         tuple val(batch_id), path(bam)
