@@ -1,30 +1,15 @@
 #!/usr/bin/env python3
-import os
 import subprocess
 import argparse
-import json
-import tempfile
-from multiprocessing import Pool
+
 
 # Usage: ./prepare_run.py NAO-ONT-20240519-practice
 # This script batches pod5 files from a delivery directory and prepares them for processing
 
-BATCH_SIZE = (1024**3)  # 8GB
-
-parser = argparse.ArgumentParser(description="Prepare ONT pod5 files for processing by batching them")
-parser.add_argument("delivery", help="Delivery directory name (e.g., NAO-ONT-20240519-practice)")
-args = parser.parse_args()
-
-# Remove trailing slash from delivery if present
-args.delivery = args.delivery.rstrip('/')
-
-S3_BUCKET = "nao-restricted"
-delivery = args.delivery
-
-def list_s3_files(prefix):
+def list_s3_files(S3_BUCKET, delivery):
     """List files in S3 with the given prefix"""
-    s3_pod5_prefix = f"{delivery}/pod5/"
-    cmd = ["aws", "s3", "ls", f"s3://{S3_BUCKET}/{s3_pod5_prefix}"]
+    pod5_dir = f"{delivery}/pod5/"
+    cmd = ["aws", "s3", "ls", f"s3://{S3_BUCKET}/{pod5_dir}"]
 
     result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, check=True)
 
@@ -41,7 +26,7 @@ def list_s3_files(prefix):
     return files
 
 
-def copy_file_to_s3(pod5_file, delivery, batch_id):
+def copy_file_to_s3(S3_BUCKET, pod5_file, delivery, batch_id):
     """Copy a file from one S3 location to another"""
 
     origin = f"s3://{S3_BUCKET}/{delivery}/pod5/{pod5_file}"
@@ -59,11 +44,11 @@ def copy_file_to_s3(pod5_file, delivery, batch_id):
 
     subprocess.run(cmd, check=True)
 
-
-def batch_input_files(files, max_files_per_batch=10):
+def batch_input_files(files, BATCH_SIZE, max_files_per_batch=10):
     """Group input files into batches based on size and count constraints"""
     current_batch = []
     current_batch_size = 0
+
 
     for file_name, size in files:
         # If adding this file would exceed batch constraints, yield current batch
@@ -81,31 +66,44 @@ def batch_input_files(files, max_files_per_batch=10):
     if current_batch:
         yield current_batch
 
-# # List all pod5 files in the S3 bucket
-print(f"Listing pod5 files in s3://{S3_BUCKET}/{delivery}/pod5/...")
-pod5_files = list_s3_files(delivery)
+def main():
+    BATCH_SIZE = (1024**3)  # 1GB
 
-if not pod5_files:
-    raise FileNotFoundError(f"No pod5 files found in s3://{S3_BUCKET}/{delivery}/pod5/")
+    parser = argparse.ArgumentParser(description="Prepare ONT pod5 files for processing by batching them")
+    parser.add_argument("delivery", help="Delivery directory name (e.g., NAO-ONT-20240519-practice)")
+    args = parser.parse_args()
 
-print(f"Found {len(pod5_files)} pod5 files to process")
+    # Remove trailing slash from delivery if present
+    args.delivery = args.delivery.rstrip('/')
 
-# Process batches and write samplesheet
-with open("pod5_sheet.csv", "w") as f:
-    f.write("batch_id\tbatch_dir\n")
+    S3_BUCKET = "nao-restricted"
+    delivery = args.delivery
 
-    for i, batch in enumerate(batch_input_files(pod5_files)):
-        batch_id = f"batch_{i:04d}"
-        batch_s3_dir = f"s3://{S3_BUCKET}/{delivery}/batched/{batch_id}"
+    # # List all pod5 files in the S3 bucket
+    print(f"Listing pod5 files in s3://{S3_BUCKET}/{delivery}/pod5/...")
+    pod5_files = list_s3_files(S3_BUCKET, delivery)
 
-        print(f"Processing batch {batch_id} with {len(batch)} files...")
+    if not pod5_files:
+        raise FileNotFoundError(f"No pod5 files found in s3://{S3_BUCKET}/{delivery}/pod5/")
 
-        # Create the batch directory in S3 (not needed as cp will create it)
-        f.write(f"{batch_id}\t{batch_s3_dir}\n")
+    print(f"Found {len(pod5_files)} pod5 files to process")
 
-        for file_name in batch:
-            copy_file_to_s3(file_name, delivery, batch_id)
+    with open("pod5_sheet.tsv", "w") as f:
+        f.write("batch_id\tbatch_dir\n")
+
+        for i, batch in enumerate(batch_input_files(pod5_files, BATCH_SIZE)):
+            batch_id = f"batch_{i:04d}"
+            batch_s3_dir = f"s3://{S3_BUCKET}/{delivery}/batched/{batch_id}"
+
+            print(f"Processing batch {batch_id} with {len(batch)} files...")
+
+            f.write(f"{batch_id}\t{batch_s3_dir}\n")
+
+            for file_name in batch:
+                copy_file_to_s3(S3_BUCKET, file_name, delivery, batch_id)
 
 
-print(f"Prepared batches for {args.delivery}. Sample sheet written to pod5_sheet.csv")
+    print(f"Prepared batches for {args.delivery}. Sample sheet written to pod5_sheet.tsv")
 
+if __name__ == "__main__":
+    main()
