@@ -9,7 +9,6 @@ import java.time.LocalDateTime
 | MODULES AND SUBWORKFLOWS |
 ***************************/
 
-include { BATCH_POD_5 } from "../modules/local/batchPod5"
 include { BASECALL_POD_5_SIMPLEX } from "../modules/local/dorado"
 include { BASECALL_POD_5_DUPLEX } from "../modules/local/dorado"
 include { DEMUX_POD_5 } from "../modules/local/dorado"
