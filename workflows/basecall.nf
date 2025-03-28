@@ -30,7 +30,7 @@ workflow BASECALL {
     pod5_ch = channel.fromPath(params.pod_5_dir)
 
     // file -> tuple(file, division)
-    pod5_ch = pod5_ch.collect()
+    pod5_ch = pod5_ch.collect(flat: false, sort: true)
         .flatMap { files ->
         files.withIndex().collect { file, index ->
             tuple(file, String.format("div%04d", index + 1))
