@@ -14,5 +14,3 @@ output {
         tags nextflow_file_class: "publish", "nextflow.io/temporary": "false"
     }
 }
-
-

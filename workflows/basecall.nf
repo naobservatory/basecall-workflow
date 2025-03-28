@@ -9,7 +9,6 @@ import java.time.LocalDateTime
 | MODULES AND SUBWORKFLOWS |
 ***************************/
 
-include { BATCH_POD_5 } from "../modules/local/batchPod5"
 include { BASECALL_POD_5_SIMPLEX } from "../modules/local/dorado"
 include { BASECALL_POD_5_DUPLEX } from "../modules/local/dorado"
 include { DEMUX_POD_5 } from "../modules/local/dorado"
@@ -26,15 +25,24 @@ workflow BASECALL {
     // Start time
     start_time = new Date()
     start_time_str = start_time.format("YYYY-MM-dd HH:mm:ss z (Z)")
+
     // Batching
-    batch_pod5_ch = BATCH_POD_5(params.pod_5_dir, params.batch_size).flatten()
+    pod5_ch = channel.fromPath(params.pod_5_dir)
+
+    // file -> tuple(file, division)
+    pod5_ch = pod5_ch.collect(flat: false, sort: true)
+        .flatMap { files ->
+        files.withIndex().collect { file, index ->
+            tuple(file, String.format("div%04d", index + 1))
+        }
+    }
 
     // Basecalling
     if (params.duplex) {
-        bam_ch = BASECALL_POD_5_DUPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
+        bam_ch = BASECALL_POD_5_DUPLEX(pod5_ch, params.kit, params.nanopore_run)
         final_bam_ch = bam_ch.bam.flatten()
     } else {
-        bam_ch = BASECALL_POD_5_SIMPLEX(batch_pod5_ch, params.kit, params.nanopore_run)
+        bam_ch = BASECALL_POD_5_SIMPLEX(pod5_ch, params.kit, params.nanopore_run)
         if (params.demux) {
             demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run)
             final_bam_ch = demux_ch.demux_bam.flatten()
@@ -45,6 +53,5 @@ workflow BASECALL {
     fastq_ch = BAM_TO_FASTQ(final_bam_ch, params.nanopore_run)
 
     publish:
-    fastq_ch >> "raw"
-    bam_ch.summary >> "logging"
+        fastq_ch >> "raw"
 }

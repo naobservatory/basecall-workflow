@@ -3,10 +3,10 @@ process BASECALL_POD_5_SIMPLEX {
     label "dorado"
     label "basecall"
     accelerator 1
-    memory '8 GB'
+    memory '16 GB'
 
     input:
-        path(pod_5_dir)
+        tuple path(pod5), val(division)
         val kit
         val nanopore_run
 
@@ -17,13 +17,11 @@ process BASECALL_POD_5_SIMPLEX {
     shell:
         '''
         nanopore_run=!{nanopore_run}
-        # Extract batch number
-        batch_num=$(basename !{pod_5_dir} | grep -o '[0-9]\\+')
 
         # Dorado basecalling
-        dorado basecaller sup !{pod_5_dir} --kit-name !{kit} > ${nanopore_run}-${batch_num}.bam
+        dorado basecaller sup !{pod5} --kit-name !{kit} > ${nanopore_run}-!{division}.bam
 
-        dorado summary ${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
+        dorado summary ${nanopore_run}-!{division}.bam > sequencing_summary_${nanopore_run}-!{division}.txt
         '''
 }
 
@@ -31,27 +29,25 @@ process BASECALL_POD_5_DUPLEX {
     label "dorado"
     label "basecall"
     accelerator 1
-    memory '8 GB'
+    memory '16 GB'
 
     input:
-        path(pod_5_dir)
+        tuple path(pod5), val(division)
         val kit
         val nanopore_run
 
     output:
-        path("*.bam"), emit: bam
-        path("sequencing_summary_*.txt"), emit: summary
+        tuple path("*.bam"), val(division), emit: bam
+        tuple path("sequencing_summary_*.txt"), val(division), emit: summary
 
     shell:
         '''
         nanopore_run=!{nanopore_run}
-        # Extract batch number
-        batch_num=$(basename !{pod_5_dir} | grep -o '[0-9]\\+')
 
         # Dorado basecalling
-        dorado duplex sup !{pod_5_dir} > ${nanopore_run}-${batch_num}.bam
+        dorado duplex sup !{pod5} > ${nanopore_run}-!{division}.bam
 
-        dorado summary ${nanopore_run}-${batch_num}.bam > sequencing_summary_${nanopore_run}-${batch_num}.txt
+        dorado summary ${nanopore_run}-!{division}.bam > sequencing_summary_${nanopore_run}-!{division}.txt
         '''
 }
 
@@ -60,7 +56,7 @@ process DEMUX_POD_5 {
     label "dorado"
     label "demux"
     accelerator 1
-    memory '8 GB'
+    memory '16 GB'
 
     input:
         path bam
