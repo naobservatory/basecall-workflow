@@ -8,14 +8,13 @@ This Nextflow pipeline is designed to process Oxford Nanopore raw signal data (P
 
 The pipeline consists of a single workflow that processes Nanopore POD5 files through several phases:
 
-1. A **batching phase** where POD5 files are grouped into batches to allow parallelized basecalling
-2. A **basecalling phase** using Dorado in either simplex or duplex mode
-3. An optional **demultiplexing phase** for barcoded samples
-4. A final **conversion phase** to generate FASTQ files from BAM output
+1. A **basecalling phase** using Dorado in either simplex or duplex mode
+2. An optional **demultiplexing phase** for barcoded samples
+3. A final **conversion phase** to generate FASTQ files from BAM output
 
 ### Pipeline Outputs
 
-The workflow produces the following key outputs:
+The workflow produces the following outputs:
 
 1. `raw/`: Directory containing the final FASTQ files
 2. `summary/`: Directory containing basecalling summary statistics
@@ -39,9 +38,7 @@ Create a new directory, name it after the delivery, copy in basecall.config as n
   - Duplex basecalling or no? You can't combine duplex and demux
 - demux
   - Demultiplex basecalling output?
-- batch_size
-  - Sizing for batching pod5 files for parallelized base-calling
-- nanopore_run N
+- nanopore_run
   - Name of run/delivery
 - kit 
   - Name of ONT kit, needed for demux'ing
