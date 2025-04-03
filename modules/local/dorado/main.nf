@@ -66,10 +66,18 @@ process DEMUX_POD_5 {
     output:
         path('demultiplexed/*'), emit: demux_bam
 
-    script:
+    shell:
         '''
         nanopore_run=!{nanopore_run}
         division=!{division}
+        # Store barcodes in a properly quoted variable
+        barcodes="!{valid_barcodes}"
+
+        # Turn the barcodes into a proper array by removing brackets and splitting on comma
+        barcodes_array=($(echo "$barcodes" | tr -d '[]' | tr ',' ' '))
+
+        echo "Barcodes: !{valid_barcodes}"
+        echo "Barcodes array: ${barcodes_array[@]}"
 
         # Demultiplex
         dorado demux --no-classify --output-dir demultiplexed/ !{bam}
@@ -84,10 +92,17 @@ process DEMUX_POD_5 {
             demux_id=${demux_id#barcode}
 
             # Check if demux_id is in valid_barcodes
-            if [[ "!{valid_barcodes}" == *"${demux_id}"* ]]; then
-                mv "$f" "demultiplexed/${nanopore_run}-${demux_id}-div${division}.bam"
+            if [[ " ${barcodes_array[@]} " =~ " ${demux_id} " ]]; then
+                echo "Processing file: $f with Demux ID: ${demux_id}"
+                mv "$f" "demultiplexed/${nanopore_run}-${demux_id}-${division}.bam"
             else
-                mv "$f" "demultiplexed/${nanopore_run}-unclassified-div${division}.bam"
+                if [ -f "demultiplexed/${nanopore_run}-unclassified-${division}.bam" ]; then
+                    # Append to existing unclassified file
+                    cat "$f" >> "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
+                else
+                    # Create new unclassified file
+                    cp "$f" "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
+                fi
             fi
         done
         '''

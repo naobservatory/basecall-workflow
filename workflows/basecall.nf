@@ -37,6 +37,9 @@ workflow BASECALL {
         }
     }
 
+    // Barcodes
+    barcodes_ch = file(params.barcodes).readLines().collect()
+
     // Basecalling
     if (params.duplex) {
         bam_ch = BASECALL_POD_5_DUPLEX(pod5_ch, params.kit, params.nanopore_run)
@@ -44,7 +47,7 @@ workflow BASECALL {
     } else {
         bam_ch = BASECALL_POD_5_SIMPLEX(pod5_ch, params.kit, params.nanopore_run)
         if (params.demux) {
-            demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run)
+            demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run, barcodes_ch)
             final_bam_ch = demux_ch.demux_bam.flatten()
         }
     }
