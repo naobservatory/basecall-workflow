@@ -85,6 +85,9 @@ process DEMUX_POD_5 {
         # Print contents of demultiplexed directory
         ls -la demultiplexed/*
 
+        # Create unclassified file if it doesn't exist
+        touch demultiplexed/${nanopore_run}-unclassified-${division}.bam
+
         # Rename output files
         for f in demultiplexed/*; do
             # Extract demux_id from filename
@@ -96,13 +99,9 @@ process DEMUX_POD_5 {
                 echo "Processing file: $f with Demux ID: ${demux_id}"
                 mv "$f" "demultiplexed/${nanopore_run}-${demux_id}-${division}.bam"
             else
-                if [ -f "demultiplexed/${nanopore_run}-unclassified-${division}.bam" ]; then
-                    # Append to existing unclassified file
-                    cat "$f" >> "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
-                else
-                    # Create new unclassified file
-                    cp "$f" "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
-                fi
+                # Append to unclassified file and remove
+                cat "$f" >> "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
+                rm "$f"
             fi
         done
         '''
