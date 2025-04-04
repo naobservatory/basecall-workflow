@@ -98,10 +98,12 @@ process DEMUX_POD_5 {
             if [[ " ${barcodes_array[@]} " =~ " ${demux_id} " ]]; then
                 echo "Processing file: $f with Demux ID: ${demux_id}"
                 mv "$f" "demultiplexed/${nanopore_run}-${demux_id}-${division}.bam"
+            elif [[ "$f" == *"unclassified"* ]]; then
+                echo "Processing unclassified file: $f"
+                mv "$f" "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
             else
-                # Append to unclassified file and remove
-                cat "$f" >> "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
-                rm "$f"
+                echo "Processing wrong barcode file: $f"
+                mv "$f" "demultiplexed/${nanopore_run}-wrong-barcode-${division}.bam"
             fi
         done
         '''
