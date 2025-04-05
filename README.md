@@ -17,7 +17,7 @@ The pipeline consists of a single workflow that processes Nanopore POD5 files th
 The workflow produces the following outputs:
 
 1. `raw/`: Directory containing the final FASTQ files
-2. `summary/`: Directory containing basecalling summary statistics
+2. `unclassified/`: Directory containing unclassified FASTQ files (only relevant for demultiplexing)
 
 ## Using the Workflow
 
@@ -40,12 +40,17 @@ Create a new directory, name it after the delivery, copy in basecall.config as n
   - Demultiplex basecalling output?
 - nanopore_run
   - Name of run/delivery
-- kit 
+- kit
   - Name of ONT kit, needed for demux'ing
-- pod_5_dir
-  - path to dir containing pod5 files
-- base_dir
-  - path to where output will be saved to
+
+Additionally, add a barcodes.txt file to the directory, containing the barcodes to be demultiplexed, in the format:
+
+```
+01
+02
+12
+...
+```
 
 Once that is done, you can switch into the directory and run
 
