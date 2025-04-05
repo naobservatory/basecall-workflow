@@ -77,18 +77,11 @@ process DEMUX_POD_5 {
         # Turn the barcodes into a proper array by removing brackets and splitting on comma
         barcodes_array=($(echo "$barcodes" | tr -d '[]' | tr ',' ' '))
 
-        echo "Barcodes: !{valid_barcodes}"
-        echo "Barcodes array: ${barcodes_array[@]}"
-
         # Demultiplex
         dorado demux --no-classify --output-dir demultiplexed/ !{bam}
 
-        # Print contents of demultiplexed directory
-        ls -la demultiplexed/*
-
-        # Create unclassified file if it doesn't exist
+        # Create unclassified dir
         mkdir -p unclassified
-        touch unclassified/${nanopore_run}-unclassified-${division}.bam
 
         # Rename output files
         for f in demultiplexed/*; do
@@ -104,7 +97,7 @@ process DEMUX_POD_5 {
                 echo "Processing unclassified file: $f"
                 mv "$f" "unclassified/${nanopore_run}-unclassified-${division}.bam"
             else
-                echo "Processing wrong barcode file: $f"
+                echo "Processing wrong barcode: $f"
                 mv "$f" "unclassified/${nanopore_run}-faulty-barcode-${demux_id}-${division}.bam"
             fi
         done
