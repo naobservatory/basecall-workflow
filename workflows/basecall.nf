@@ -12,7 +12,8 @@ import java.time.LocalDateTime
 include { BASECALL_POD_5_SIMPLEX } from "../modules/local/dorado"
 include { BASECALL_POD_5_DUPLEX } from "../modules/local/dorado"
 include { DEMUX_POD_5 } from "../modules/local/dorado"
-include { BAM_TO_FASTQ } from "../modules/local/samtools"
+include { BAM_TO_FASTQ as BAM_TO_FASTQ_DEMUX } from "../modules/local/samtools"
+include { BAM_TO_FASTQ as BAM_TO_FASTQ_UNCLASSIFIED } from "../modules/local/samtools"
 nextflow.preview.output = true
 
 /*****************
@@ -49,12 +50,15 @@ workflow BASECALL {
         if (params.demux) {
             demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run, barcodes_ch)
             final_bam_ch = demux_ch.demux_bam.flatten()
+            unclassified_bam_ch = demux_ch.unclassified_bam.flatten()
         }
     }
 
     // Convert to FASTQ
-    fastq_ch = BAM_TO_FASTQ(final_bam_ch, params.nanopore_run)
+    classified_fastq_ch = BAM_TO_FASTQ_DEMUX(final_bam_ch, params.nanopore_run)
+    unclassified_fastq_ch = BAM_TO_FASTQ_UNCLASSIFIED(unclassified_bam_ch, params.nanopore_run)
 
     publish:
-        fastq_ch >> "raw"
+        classified_fastq_ch >> "raw"
+        unclassified_fastq_ch >> "unclassified"
 }

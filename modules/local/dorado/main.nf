@@ -65,6 +65,7 @@ process DEMUX_POD_5 {
         val valid_barcodes
     output:
         path('demultiplexed/*'), emit: demux_bam
+        path('unclassified/*'), emit: unclassified_bam
 
     shell:
         '''
@@ -86,7 +87,8 @@ process DEMUX_POD_5 {
         ls -la demultiplexed/*
 
         # Create unclassified file if it doesn't exist
-        touch demultiplexed/${nanopore_run}-unclassified-${division}.bam
+        mkdir -p unclassified
+        touch unclassified/${nanopore_run}-unclassified-${division}.bam
 
         # Rename output files
         for f in demultiplexed/*; do
@@ -100,10 +102,10 @@ process DEMUX_POD_5 {
                 mv "$f" "demultiplexed/${nanopore_run}-${demux_id}-${division}.bam"
             elif [[ "$f" == *"unclassified"* ]]; then
                 echo "Processing unclassified file: $f"
-                mv "$f" "demultiplexed/${nanopore_run}-unclassified-${division}.bam"
+                mv "$f" "unclassified/${nanopore_run}-unclassified-${division}.bam"
             else
                 echo "Processing wrong barcode file: $f"
-                mv "$f" "demultiplexed/${nanopore_run}-wrong-barcode-${division}.bam"
+                mv "$f" "unclassified/${nanopore_run}-faulty-barcode-${demux_id}-${division}.bam"
             fi
         done
         '''
