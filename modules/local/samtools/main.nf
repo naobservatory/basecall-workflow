@@ -16,3 +16,17 @@ process BAM_TO_FASTQ {
         samtools fastq !{bam} | gzip -c > "${base_name}.fastq.gz"
         '''
 }
+
+process MERGE_BAMS {
+    label "samtools"
+
+    input:
+        path(bam_files)
+        val nanopore_run
+    output:
+        path('!{nanopore_run}-unclassified.bam')
+    shell:
+        '''
+        samtools merge -r -o !{nanopore_run}-unclassified.bam !{bam_files}
+        '''
+}
