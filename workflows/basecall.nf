@@ -50,7 +50,7 @@ workflow BASECALL {
         if (params.demux) {
             demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run, barcodes_ch)
             classified_bam_ch = demux_ch.demux_bam.flatten()
-            unclassified_bam_ch = MERGE_BAMS(demux_ch.unclassified_bam, params.nanopore_run)
+            unclassified_bam_ch = MERGE_BAMS(demux_ch.unclassified_bam.collect(), params.nanopore_run)
             final_bam_ch = classified_bam_ch.mix(unclassified_bam_ch)
         }
     }
