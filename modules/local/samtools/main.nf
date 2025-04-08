@@ -24,7 +24,7 @@ process MERGE_BAMS {
         path(bam_files)
         val nanopore_run
     output:
-        path('!{nanopore_run}-unclassified.bam')
+        path("${nanopore_run}-unclassified.bam")
     shell:
         '''
         samtools merge -r -o !{nanopore_run}-unclassified.bam !{bam_files}
