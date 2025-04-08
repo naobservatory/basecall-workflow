@@ -13,6 +13,7 @@ include { BASECALL_POD_5_SIMPLEX } from "../modules/local/dorado"
 include { BASECALL_POD_5_DUPLEX } from "../modules/local/dorado"
 include { DEMUX_POD_5 } from "../modules/local/dorado"
 include { BAM_TO_FASTQ } from "../modules/local/samtools"
+include { MERGE_BAMS } from "../modules/local/samtools"
 nextflow.preview.output = true
 
 /*****************
@@ -37,6 +38,9 @@ workflow BASECALL {
         }
     }
 
+    // Barcodes
+    barcodes_ch = file(params.barcodes).readLines().collect()
+
     // Basecalling
     if (params.duplex) {
         bam_ch = BASECALL_POD_5_DUPLEX(pod5_ch, params.kit, params.nanopore_run)
@@ -44,8 +48,10 @@ workflow BASECALL {
     } else {
         bam_ch = BASECALL_POD_5_SIMPLEX(pod5_ch, params.kit, params.nanopore_run)
         if (params.demux) {
-            demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run)
-            final_bam_ch = demux_ch.demux_bam.flatten()
+            demux_ch = DEMUX_POD_5(bam_ch.bam, params.kit, params.nanopore_run, barcodes_ch)
+            classified_bam_ch = demux_ch.demux_bam.flatten()
+            unclassified_bam_ch = MERGE_BAMS(demux_ch.unclassified_bam.collect(), params.nanopore_run)
+            final_bam_ch = classified_bam_ch.mix(unclassified_bam_ch)
         }
     }
 

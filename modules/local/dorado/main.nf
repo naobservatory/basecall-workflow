@@ -11,8 +11,8 @@ process BASECALL_POD_5_SIMPLEX {
         val nanopore_run
 
     output:
-        path("*.bam"), emit: bam
-        path("sequencing_summary_*.txt"), emit: summary
+        tuple path("*.bam"), val(division), emit: bam
+        tuple path("sequencing_summary_*.txt"), val(division), emit: summary
 
     shell:
         '''
@@ -59,30 +59,47 @@ process DEMUX_POD_5 {
     memory '16 GB'
 
     input:
-        path bam
+        tuple path(bam), val(division)
         val kit
         val nanopore_run
+        val valid_barcodes
     output:
         path('demultiplexed/*'), emit: demux_bam
+        path('unclassified/*'), emit: unclassified_bam
 
-    script:
-        """
-        nanopore_run=${nanopore_run}
-        # Extract batch number
-        batch_num=\$(basename ${bam} | grep -o '[0-9]\\+' | tail -n1)
+    shell:
+        '''
+        nanopore_run=!{nanopore_run}
+        division=!{division}
+        # Store barcodes in a properly quoted variable
+        barcodes="!{valid_barcodes}"
+
+        # Turn the barcodes into a proper array by removing brackets and splitting on comma
+        barcodes_array=($(echo "$barcodes" | tr -d '[]' | tr ',' ' '))
 
         # Demultiplex
-        dorado demux --no-classify --output-dir demultiplexed/ ${bam}
+        dorado demux --no-classify --output-dir demultiplexed/ !{bam}
 
-        # Print contents of demultiplexed directory
-        ls -la demultiplexed/*
+        # Create unclassified dir
+        mkdir -p unclassified
 
         # Rename output files
         for f in demultiplexed/*; do
-            [[ "\$f" == *.bam ]] || { echo "Error: File \$f is not a BAM file"; exit 1; }
-            barcode=\$(basename "\$f" | sed -E 's/.*_(.+)\\.bam\$/\\1/')
-            barcode=\$(echo "\$barcode" | sed -E 's/barcode//')
-            mv "\$f" "demultiplexed/\${nanopore_run}-\${barcode}-div\${batch_num}.bam"
+            # Extract demux_id from filename
+            demux_id=$(basename "$f" .bam | awk -F '_' '{print $NF}')
+            demux_id=${demux_id#barcode}
+
+            # Check if demux_id is in valid_barcodes
+            if [[ " ${barcodes_array[@]} " =~ " ${demux_id} " ]]; then
+                echo "Processing file: $f with Demux ID: ${demux_id}"
+                mv "$f" "demultiplexed/${nanopore_run}-${demux_id}-${division}.bam"
+            elif [[ "$f" == *"unclassified"* ]]; then
+                echo "Processing unclassified file: $f"
+                mv "$f" "unclassified/${nanopore_run}-unclassified-${division}.bam"
+            else
+                echo "Processing wrong barcode: $f"
+                mv "$f" "unclassified/${nanopore_run}-faulty-barcode-${demux_id}-${division}.bam"
+            fi
         done
-        """
+        '''
 }
