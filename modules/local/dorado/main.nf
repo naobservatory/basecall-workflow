@@ -11,15 +11,16 @@ process BASECALL_POD_5_SIMPLEX {
         val nanopore_run
 
     output:
-        tuple path("*.bam"), val(division), emit: bam
-        tuple path("sequencing_summary_*.txt"), val(division), emit: summary
+        path("*.bam"), emit: bam
+        val(division), emit: div
+        path("sequencing_summary_*.txt"), emit: summary
 
     shell:
         '''
         nanopore_run=!{nanopore_run}
 
         # Dorado basecalling
-        dorado basecaller sup !{pod5} --kit-name !{kit} > ${nanopore_run}-!{division}.bam
+        dorado basecaller sup !{pod5} > ${nanopore_run}-!{division}.bam
 
         dorado summary ${nanopore_run}-!{division}.bam > sequencing_summary_${nanopore_run}-!{division}.txt
         '''
@@ -37,8 +38,9 @@ process BASECALL_POD_5_DUPLEX {
         val nanopore_run
 
     output:
-        tuple path("*.bam"), val(division), emit: bam
-        tuple path("sequencing_summary_*.txt"), val(division), emit: summary
+        path("*.bam"), emit: bam
+        val(division), emit: div
+        path("sequencing_summary_*.txt"), emit: summary
 
     shell:
         '''
