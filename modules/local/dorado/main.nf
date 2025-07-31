@@ -81,11 +81,10 @@ process DEMUX_POD_5 {
         mkdir -p unclassified
         mkdir -p demultiplexed
 
-        # Rename output files
-
         # Demultiplex
         dorado demux --no-classify --output-dir demultiplexed/ !{bam}
 
+        # Rename output files
         if [ "$(ls -A demultiplexed/)" ]; then
             for f in demultiplexed/*; do
                 # Extract demux_id from filename
